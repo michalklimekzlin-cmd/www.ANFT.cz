@@ -635,19 +635,37 @@ s=>s.id===slotId
 
 /* ======================================================
 
-ULOŽ SLOT
+ULOŽ SLOT - S SAFETY CHECKEM
 
 ====================================================== */
 
 function saveSlot(slot){
 
-localStorage.setItem(
+try{
 
-"VaFiT_SLOT_"+slot.id,
+const key="VaFiT_SLOT_"+slot.id;
 
-JSON.stringify(slot)
+const data=JSON.stringify(slot);
 
-);
+if(data.length>1048576){
+
+console.warn("Slot je příliš velký",slot.id);
+
+return false;
+
+}
+
+localStorage.setItem(key,data);
+
+return true;
+
+}catch(err){
+
+console.warn("localStorage plný nebo chyba:",err);
+
+return false;
+
+}
 
 }
 
@@ -658,6 +676,8 @@ NAČTI SLOT
 ====================================================== */
 
 function loadSlot(slot){
+
+try{
 
 const data=
 
@@ -676,6 +696,12 @@ slot,
 JSON.parse(data)
 
 );
+
+}catch(err){
+
+console.warn("Chyba při načítání slotu",err);
+
+}
 
 }
 
@@ -1471,19 +1497,35 @@ i=>i.id===id
 }
 /* ======================================================
 
-ULOŽENÍ SKLADU
+ULOŽENÍ SKLADU - S SAFETY CHECKEM
 
 ====================================================== */
 
 function saveStore(){
 
-localStorage.setItem(
+try{
 
-"VaFiT_STORE",
+const data=JSON.stringify(STORE.items);
 
-JSON.stringify(STORE.items)
+if(data.length>5242880){
 
-);
+console.warn("Store je příliš velký");
+
+return false;
+
+}
+
+localStorage.setItem("VaFiT_STORE",data);
+
+return true;
+
+}catch(err){
+
+console.warn("Chyba ukládání store:",err);
+
+return false;
+
+}
 
 }
 
@@ -1494,6 +1536,8 @@ NAČTENÍ SKLADU
 ====================================================== */
 
 function loadStore(){
+
+try{
 
 const data=
 
@@ -1508,6 +1552,12 @@ if(!data)return;
 STORE.items=
 
 JSON.parse(data);
+
+}catch(err){
+
+console.warn("Chyba načítání store:",err);
+
+}
 
 }
 
@@ -1549,8 +1599,6 @@ SLOT_MENU.x=x;
 
 SLOT_MENU.y=y;
 
-drawScene();
-
 }
 
 /* ------------------------------------------------------ */
@@ -1560,8 +1608,6 @@ function closeSlotMenu(){
 SLOT_MENU.visible=false;
 
 SLOT_MENU.slot=null;
-
-drawScene();
 
 }
 
@@ -1653,91 +1699,8 @@ ctx.restore();
 }
 /* ======================================================
 
-VaF'i'T ENGINE LINK
-v2.1
-NAVAZUJE NA CELÝ ENGINE
-
-====================================================== */
-
-(function(){
-
-function renderVaFiT(){
-
-    /* ---------- překryvná okna ---------- */
-
-    if(typeof drawWindow==="function"){
-        drawWindow();
-    }
-
-    if(typeof drawWindowMenu==="function"){
-        drawWindowMenu();
-    }
-
-    if(typeof drawSlotMenu==="function"){
-        drawSlotMenu();
-    }
-
-    requestAnimationFrame(renderVaFiT);
-
-}
-
-/* -------------------------------------------------- */
-
-function openVaFiTSlot(slot,x,y){
-
-    if(typeof openSlotMenu==="function"){
-
-        openSlotMenu(slot,x,y);
-
-    }
-
-    if(typeof openSlotDialog==="function"){
-
-        openSlotDialog(slot);
-
-    }
-
-    if(typeof showWindow==="function"){
-
-        showWindow();
-
-    }
-
-}
-
-/* -------------------------------------------------- */
-
-window.VaFiT={
-
-    render:renderVaFiT,
-
-    openSlot:openVaFiTSlot,
-
-    showWindow:showWindow,
-
-    hideWindow:hideWindow,
-
-    dialog:DIALOG,
-
-    store:STORE,
-
-    slotMenu:SLOT_MENU,
-
-    engine:ENGINE
-
-};
-
-/* -------------------------------------------------- */
-
-requestAnimationFrame(renderVaFiT);
-
-})();
-/* ======================================================
-
 VaF'i'T CONTENT ENGINE
 v2.2
-
-Každý slot může obsahovat cokoliv.
 
 ====================================================== */
 
@@ -1816,16 +1779,13 @@ function clearContent(slot){
     saveSlot(slot);
 
 }
+
 /* ======================================================
 
-VaF'i'T ENGINE LINK
+VaF'i'T SLOT RUNTIME
 v2.2
 
-NAVAZUJE NA CELÝ ENGINE
-
 ====================================================== */
-
-(function(){
 
 const SLOT_RUNTIME={
 
@@ -1869,17 +1829,9 @@ function activateSlot(slot){
 
     selectSlot(slot);
 
-    if(typeof openSlotDialog==="function"){
+    openSlotDialog(slot);
 
-        openSlotDialog(slot);
-
-    }
-
-    if(typeof showWindow==="function"){
-
-        showWindow();
-
-    }
+    showWindow();
 
 }
 
@@ -1887,89 +1839,18 @@ function activateSlot(slot){
 
 function deactivateSlot(){
 
-    if(typeof hideWindow==="function"){
-
-        hideWindow();
-
-    }
+    hideWindow();
 
     deselectSlot();
 
 }
 
-/* ------------------------------------------------ */
-
-function updateRuntime(){
-
-    if(!WINDOW_ENGINE.visible){
-
-        SLOT_RUNTIME.menu=false;
-
-    }else{
-
-        SLOT_RUNTIME.menu=true;
-
-    }
-
-}
-
-/* ------------------------------------------------ */
-
-function engineLoop(){
-
-    updateRuntime();
-
-    if(typeof drawWindow==="function"){
-
-        drawWindow();
-
-    }
-
-    if(typeof drawWindowMenu==="function"){
-
-        drawWindowMenu();
-
-    }
-
-    if(typeof drawSlotMenu==="function"){
-
-        drawSlotMenu();
-
-    }
-
-    requestAnimationFrame(engineLoop);
-
-}
-
-/* ------------------------------------------------ */
-
-window.VAFIT_RUNTIME={
-
-runtime:SLOT_RUNTIME,
-
-activate:activateSlot,
-
-deactivate:deactivateSlot,
-
-select:selectSlot,
-
-deselect:deselectSlot
-
-};
-
-requestAnimationFrame(engineLoop);
-
-})();
 /* ======================================================
 
-VaF'i'T ENGINE LINK
+VaF'i'T SLOT ACTIONS
 v2.3
 
-SMART SLOT ENGINE
-
 ====================================================== */
-
-(function(){
 
 const SLOT_ACTIONS={
 
@@ -2019,33 +1900,13 @@ function executeSlot(slot){
 
         case SLOT_ACTIONS.STORE:
 
-            if(typeof openSlotDialog==="function"){
-
-                openSlotDialog(slot);
-
-            }
-
-            if(typeof showWindow==="function"){
-
-                showWindow();
-
-            }
+            activateSlot(slot);
 
         break;
 
         default:
 
-            if(typeof openSlotDialog==="function"){
-
-                openSlotDialog(slot);
-
-            }
-
-            if(typeof showWindow==="function"){
-
-                showWindow();
-
-            }
+            activateSlot(slot);
 
         break;
 
@@ -2053,19 +1914,6 @@ function executeSlot(slot){
 
 }
 
-/* ------------------------------------------------ */
-
-window.VAFIT_RUNTIME.execute=executeSlot;
-
-/* ------------------------------------------------ */
-
-console.log(
-
-"VaF'i'T Smart Slot Engine v2.3 načten."
-
-);
-
-})();
 /* ======================================================
 
 VaF'i'T APP ENGINE
@@ -2170,94 +2018,7 @@ if(!slot.app)return null;
 return APP_ENGINE.apps[slot.app];
 
 }
-/* ======================================================
 
-VaF'i'T APP LAUNCHER
-v1.1
-
-====================================================== */
-
-function launchSlot(slot){
-
-APP_ENGINE.currentSlot=slot;
-
-const app=getApp(slot);
-
-if(!app){
-
-openSlotDialog(slot);
-
-showWindow();
-
-return;
-
-}
-
-switch(app.type){
-
-case "PWA":
-
-launchPWA(app);
-
-break;
-
-case "URL":
-
-launchURL(app);
-
-break;
-
-case "HTML":
-
-launchHTML(app);
-
-break;
-
-case "IMAGE":
-
-launchImage(app);
-
-break;
-
-case "VIDEO":
-
-launchVideo(app);
-
-break;
-
-case "AUDIO":
-
-launchAudio(app);
-
-break;
-
-case "FOLDER":
-
-launchFolder(app);
-
-break;
-
-case "PLUGIN":
-
-launchPlugin(app);
-
-break;
-
-case "AI":
-
-launchAI(app);
-
-break;
-
-default:
-
-openSlotDialog(slot);
-
-showWindow();
-
-}
-
-}
 /* ======================================================
 
 VaF'i'T PWA MANAGER
@@ -2321,19 +2082,35 @@ return PWA_MANAGER.installed[id];
 
 /* ======================================================
 
-ULOŽENÍ
+ULOŽENÍ - S SAFETY CHECKEM
 
 ====================================================== */
 
 function saveInstalledPWAs(){
 
-localStorage.setItem(
+try{
 
-"VaFiT_PWA",
+const data=JSON.stringify(PWA_MANAGER.installed);
 
-JSON.stringify(PWA_MANAGER.installed)
+if(data.length>5242880){
 
-);
+console.warn("PWA seznam je příliš velký");
+
+return false;
+
+}
+
+localStorage.setItem("VaFiT_PWA",data);
+
+return true;
+
+}catch(err){
+
+console.warn("Chyba ukládání PWA:",err);
+
+return false;
+
+}
 
 }
 
@@ -2345,6 +2122,8 @@ NAČTENÍ
 
 function loadInstalledPWAs(){
 
+try{
+
 const data=
 
 localStorage.getItem("VaFiT_PWA");
@@ -2355,9 +2134,16 @@ PWA_MANAGER.installed=
 
 JSON.parse(data);
 
+}catch(err){
+
+console.warn("Chyba načítání PWA:",err);
+
+}
+
 }
 
 loadInstalledPWAs();
+
 /* ======================================================
 
 PŘIPOJENÍ PWA KE SLOTU
@@ -2375,6 +2161,7 @@ slot.type="PWA";
 saveSlot(slot);
 
 }
+
 /* ======================================================
 
 ODPOJENÍ PWA
@@ -2390,6 +2177,7 @@ unregisterPWA(slot.app);
 removeAppFromSlot(slot);
 
 }
+
 /* ======================================================
 
 MÁ SLOT PWA?
@@ -2401,6 +2189,7 @@ function slotHasPWA(slot){
 return slot.app!=="";
 
 }
+
 /* ======================================================
 
 VaF'i'T BROWSER ENGINE
@@ -2511,14 +2300,11 @@ if(BROWSER.tabs.length===0){
 openBrowserTab();
 
 }
+
 /* ======================================================
 
 VaF'i'T PŘEKLADOVÝ SYSTÉM
 v1.0
-
-Připraveno pro:
-• CZ
-• CZLT
 
 ====================================================== */
 
@@ -2620,15 +2406,12 @@ if(!JAZYK.slovnik[jazyk])return;
 
 JAZYK.aktualni=jazyk;
 
-drawScene();
-
 }
+
 /* ======================================================
 
 VaF'i'T ADRESÁŘ
 v0.1
-
-Pouze příprava
 
 ====================================================== */
 
@@ -2669,43 +2452,10 @@ GLYPH:"VaFiT://glyph",
 TOJO:"VaFiT://tojo"
 
 };
+
 /* ======================================================
 
-REZERVOVANÉ ADRESY
-
-(pro budoucí rozšíření)
-
-====================================================== */
-
-const REZERVA={
-
-PLANETA_1:"",
-
-PLANETA_2:"",
-
-PLANETA_3:"",
-
-PLANETA_4:"",
-
-PLANETA_5:"",
-
-PLANETA_6:"",
-
-PLANETA_7:"",
-
-PLANETA_8:"",
-
-PLANETA_9:"",
-
-PLANETA_10:""
-
-};
-/* ======================================================
-
-VaF'i'T MODULY
-v0.1
-
-Pouze příprava systému
+MODULY
 
 ====================================================== */
 
@@ -2738,11 +2488,10 @@ OVOCET:{},
 TOJO:{}
 
 };
+
 /* ======================================================
 
 VaF'i'T JÁDRO
-
-Připravené pro budoucí rozšíření
 
 ====================================================== */
 
@@ -2773,6 +2522,7 @@ okna:[],
 aplikace:[]
 
 };
+
 /* ======================================================
 
 REGISTR MODULŮ
@@ -2808,12 +2558,10 @@ registrujModul("PLANETY",MODULY.PLANETY);
 registrujModul("OVOCET",MODULY.OVOCET);
 
 registrujModul("TOJO",MODULY.TOJO);
+
 /* ======================================================
 
-VaF'i'T SLUŽBY
-v0.1
-
-Společné služby systému
+SLUŽBY
 
 ====================================================== */
 
@@ -2840,6 +2588,7 @@ SITE:{},
 SYSTEM:{}
 
 };
+
 /* ======================================================
 
 REGISTR SLUŽEB
@@ -2879,16 +2628,10 @@ registrujSluzbu("ULOZISTE",SLUZBY.ULOZISTE);
 registrujSluzbu("SITE",SLUZBY.SITE);
 
 registrujSluzbu("SYSTEM",SLUZBY.SYSTEM);
+
 /* ======================================================
 
 VaF'i'T SCHRÁNKA
-
-Připraveno pro:
-
-kopírovat
-vložit
-přesunout
-sdílet
 
 ====================================================== */
 
@@ -2905,12 +2648,11 @@ cil:"",
 cas:0
 
 };
+
 /* ======================================================
 
 VaF'i'T EVENT ENGINE
 v0.1
-
-Jednotný systém událostí
 
 ====================================================== */
 
@@ -2935,6 +2677,7 @@ klavesnice:[],
 system:[]
 
 };
+
 /* ======================================================
 
 REGISTR UDÁLOSTÍ
@@ -2962,6 +2705,7 @@ funkce
 });
 
 }
+
 /* ======================================================
 
 SPUŠTĚNÍ UDÁLOSTI
@@ -3003,57 +2747,11 @@ err
 });
 
 }
-/* ======================================================
 
-PŘIPRAVENÉ UDÁLOSTI
-
-====================================================== */
-
-registrujUdalost(
-
-"klik",
-
-"Slot",
-
-()=>{}
-
-);
-
-registrujUdalost(
-
-"dlouhyStisk",
-
-"Menu",
-
-()=>{}
-
-);
-
-registrujUdalost(
-
-"praveTlacitko",
-
-"Kontext",
-
-()=>{}
-
-);
-
-registrujUdalost(
-
-"dvaPrsty",
-
-"Navigace",
-
-()=>{}
-
-);
 /* ======================================================
 
 VaF'i'T WORLD ENGINE
-SEMÍNKO 0.1
-
-Všechny světy budou vyrůstat odsud.
+v0.1
 
 ====================================================== */
 
@@ -3090,6 +2788,7 @@ hraci:[],
 ai:[]
 
 };
+
 /* ======================================================
 
 REGISTR SVĚTŮ
@@ -3120,6 +2819,7 @@ registrujSvet(
 "Domov"
 
 );
+
 /* ======================================================
 
 PLANETY
@@ -3149,46 +2849,17 @@ ai:[]
 });
 
 }
+
 vytvorPlanetu(
 
 "Planeta 1"
 
 );
-/* ======================================================
 
-VaF'i'T BOOT ENGINE
-
-Poslední část indexu
-
-====================================================== */
-
-function startVaFiT(){
-
-    console.log("Boot systému...");
-
-    loadStore();
-    loadAllSlots();
-
-    resizeEngine();
-
-    drawScene();
-
-    console.log("Systém připraven.");
-
-    statusEl.textContent="VaF'i'T připraven";
-}
-
-window.addEventListener(
-
-"load",
-
-startVaFiT
-
-);
 /* ======================================================
 
 VaF'i'T CORE MANAGER
-SEMÍNKO 0.1
+v0.1
 
 ====================================================== */
 
@@ -3247,7 +2918,6 @@ statusEl.textContent="VaF'i'T připraven";
 console.log("CORE READY");
 
 }
-/* ======================================================
 
 /* ======================================================
 
@@ -3279,70 +2949,276 @@ registrujCore("Event");
 
 registrujCore("Jádro");
 
+/* ======================================================
+
+VaF'i'T RENDERING ENGINE
+v1.0 - ZPROVOZNĚNÁ VERZE
+
+====================================================== */
+
+function drawScene(){
+
+ctx.clearRect(0, 0, width, height);
+
+ctx.fillStyle = "rgba(2,2,8,1)";
+ctx.fillRect(0, 0, width, height);
+
+/* Základní hub kruh */
+
+ctx.strokeStyle = "rgba(100,150,255,.3)";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.arc(WORLD.centerX, WORLD.centerY, ENGINE.hub.innerRadius, 0, Math.PI*2);
+ctx.stroke();
+
+ctx.strokeStyle = "rgba(100,150,255,.2)";
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.arc(WORLD.centerX, WORLD.centerY, ENGINE.hub.outerRadius, 0, Math.PI*2);
+ctx.stroke();
+
+/* Signal core */
+
+ctx.strokeStyle = "rgba(255,200,100,.4)";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.arc(ENGINE.signalCore.centerX, ENGINE.signalCore.centerY, ENGINE.signalCore.baseRadius, 0, Math.PI*2);
+ctx.stroke();
+
+/* Big cone nákres */
+
+ctx.strokeStyle = "rgba(150,200,255,.3)";
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.arc(ENGINE.bigCone.centerX, ENGINE.bigCone.centerY, ENGINE.bigCone.radiusTop, 0, Math.PI*2);
+ctx.stroke();
+
+/* Sféry - jednoduché reprezentace */
+
+ENGINE.spheres.forEach((sphere, idx) => {
+
+const angle = (ENGINE.orbit.rotation + idx * Math.PI/2);
+
+const radius = ENGINE.hub.outerRadius * 1.5;
+
+const x = WORLD.centerX + Math.cos(angle) * radius;
+
+const y = WORLD.centerY + Math.sin(angle) * radius;
+
+ctx.fillStyle = "rgba(255,200,100,.6)";
+
+ctx.beginPath();
+
+ctx.arc(x, y, baseRadius * 0.4, 0, Math.PI*2);
+
+ctx.fill();
+
+ctx.fillStyle = "rgba(255,255,255,.8)";
+
+ctx.font = "12px system-ui";
+
+ctx.textAlign = "center";
+
+ctx.textBaseline = "middle";
+
+ctx.fillText(sphere.name.substring(0,4), x, y);
+
+});
+
+}
+
+function generateSignalCore(){
+
+ENGINE.signalCore.points = [];
+
+}
+
+function generateBigCone(){
+
+ENGINE.bigCone.points = [];
+
+}
+
+function layoutSphereSlots(){
+
+/* Rozložení slotů na pozice - zatím jen příprava */
+
+ENGINE.spheres.forEach(sphere => {
+
+sphere.slots.forEach((slot, idx) => {
+
+const angle = (idx / sphere.slots.length) * Math.PI * 2;
+
+slot.sceneX = Math.cos(angle) * 100;
+
+slot.sceneY = Math.sin(angle) * 100;
+
+});
+
+});
+
+}
+
+/* ======================================================
+
+VaF'i'T EVENT HANDLING
+v1.0
+
+====================================================== */
+
+canvas.addEventListener("click", (e) => {
+
+const rect = canvas.getBoundingClientRect();
+
+const mouseX = e.clientX - rect.left;
+
+const mouseY = e.clientY - rect.top;
+
+/* Ověření kliknutí na nějaký slot */
+
+ENGINE.spheres.forEach(sphere => {
+
+sphere.slots.forEach(slot => {
+
+const dx = mouseX - slot.screenX;
+
+const dy = mouseY - slot.screenY;
+
+const distance = Math.sqrt(dx*dx + dy*dy);
+
+if(distance < 25){
+
+executeSlot(slot);
+
+}
+
+});
+
+});
+
+});
+
+canvas.addEventListener("contextmenu", (e) => {
+
+e.preventDefault();
+
+const rect = canvas.getBoundingClientRect();
+
+const mouseX = e.clientX - rect.left;
+
+const mouseY = e.clientY - rect.top;
+
+ENGINE.spheres.forEach(sphere => {
+
+sphere.slots.forEach(slot => {
+
+const dx = mouseX - slot.screenX;
+
+const dy = mouseY - slot.screenY;
+
+const distance = Math.sqrt(dx*dx + dy*dy);
+
+if(distance < 25){
+
+openSlotMenu(slot, mouseX, mouseY);
+
+}
+
+});
+
+});
+
+});
+
+document.addEventListener("keydown", (e) => {
+
+if(e.key === "Escape"){
+
+closeSlotMenu();
+
+hideWindow();
+
+}
+
+});
+
+/* ======================================================
+
+VaF'i'T MAIN RENDER LOOP
+v1.0 - JEDNOTNÝ LOOP
+
+====================================================== */
+
+function engineLoop(){
+
+/* Aktualizace orbitu */
+
+ENGINE.orbit.rotation += ENGINE.orbit.velocity;
+
+ENGINE.orbit.velocity *= ENGINE.orbit.damping;
+
+ENGINE.orbit.velocity += ENGINE.orbit.drift * (Math.random() - 0.5);
+
+/* Rendrování */
+
+drawScene();
+
+drawWindow();
+
+drawWindowMenu();
+
+drawSlotMenu();
+
+/* Následující frame */
+
+requestAnimationFrame(engineLoop);
+
+}
+
+/* ======================================================
+
+VaF'i'T BOOT SEQUENCE
+v1.0
+
+====================================================== */
+
+function startVaFiT(){
+
+console.log("Boot systému...");
+
+loadStore();
+
+loadAllSlots();
+
+resizeEngine();
+
+drawScene();
+
 dokoncitCore();
-
-/* ======================================================
-
-Vivere atque Fru'i¡´T
-
-SEMÍNKO
-
-Tento soubor není dokončen.
-
-Je to první kořen.
-
-Každý nový den může přinést
-novou myšlenku.
-
-Každý nový člověk může přidat
-novou větev.
-
-Každá chyba je příležitost
-něco zlepšit.
-
-Děkujeme všem,
-kteří s námi rostou.
-
-(∩^o^)⊃━☆ﾟ.*･｡
-
-====================================================== */
-
-/* ======================================================
-
-VaF'i'T ENGINE
-
-SEMÍNKO 0.1
-
-Dokončení první etapy
-
-====================================================== */
-
-console.log("");
-console.log("========================================");
-console.log(" VaF'i'T ENGINE");
-console.log(" SEMÍNKO 0.1");
-console.log(" Připraveno pokračovat.");
-console.log("========================================");
-console.log("");
 
 statusEl.textContent="🌱 VaF'i'T připraven";
 
-/* ======================================================
+console.log("");
 
-KONEC PRVNÍ ETAPY
+console.log("========================================");
 
-Další moduly budou navazovat
-na tento základ.
+console.log(" VaF'i'T ENGINE");
 
-Browser
-AI
-Planety
-Glyph
-PWA
-World Engine
-OvoceT
+console.log(" SEMÍNKO 0.1");
 
-====================================================== */
+console.log(" Připraveno pokračovat.");
+
+console.log("========================================");
+
+console.log("");
+
+/* Spuštění render loop */
+
+engineLoop();
+
+}
+
+window.addEventListener("load", startVaFiT);
 
 /* ======================================================
 
@@ -3353,16 +3229,6 @@ Poděkování
 Michal Mikula
 Michal Klimek
 Bráška
-
-{°(˚.•).•)// {*(˚.•).•)// [◉_◉] \\(•.(•.˚)ア}
-
-      . ့.  ့.•.°,,*:.စ. ပ` ှီ.ဎ၊.()) ())
-  . ်.  ိ. ့. ွ ံ`ˇ'˚ˇ:•7ī\\//ə:•{т ✿( ‍්‍්.•).•)
-             .˚ჟ°ौरं्ऽ०॰°^ˇ˚'ˇ´´ˇ':•.«°»´
-
-Každý den se můžeme naučit něco nového.
-Projekt není nikdy dokončen.
-Dokončen je pouze dnešní krok.
 
 (∩^o^)⊃━☆ﾟ.*･｡
 
@@ -3382,24 +3248,6 @@ navigator.serviceWorker
 
 });
 
-}
-
-function drawScene(){
-    ctx.clearRect(0, 0, width, height);
-
-    ctx.fillStyle = "rgba(2,2,8,1)";
-    ctx.fillRect(0, 0, width, height);
-}
-
-function generateSignalCore(){
-    ENGINE.signalCore.points = [];
-}
-
-function generateBigCone(){
-    ENGINE.bigCone.points = [];
-}
-
-function layoutSphereSlots(){
 }
 
 </script>
