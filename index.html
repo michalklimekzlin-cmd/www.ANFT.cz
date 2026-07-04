@@ -1,73 +1,229 @@
 <!doctype html>
 <html lang="cs">
+
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1,
+maximum-scale=1,
+viewport-fit=cover,
+user-scalable=no">
 
-  <title>PNFT • Vivere atque Fru`i¡´T</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bráška Hlava">
 
-  <meta name="description" content="PNFT – kde signál získává hodnotu">
+<meta charset="utf-8">
 
-  <style>
-    body {
-      margin: 0;
-      background: #0a0a0a;
-      color: #ffffff;
-      font-family: sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-    }
+<meta name="theme-color" content="#020617">
 
-    .container {
-      max-width: 90%;
-    }
+<link rel="manifest" href="./manifest.json">
 
-    h1 {
-      font-size: 28px;
-      line-height: 1.6;
-      letter-spacing: 2px;
-    }
+<title>Bráška Hlava • VAFT</title>
 
-    p {
-      opacity: 0.7;
-      margin-top: 20px;
-    }
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="glyph/glyph.css">
 
-    .sig {
-      margin-top: 30px;
-      font-size: 12px;
-      opacity: 0.5;
-      line-height: 1.6;
-    }
-  </style>
+<style>
+/* =========================
+   PNFT CORNER
+========================= */
+#pnftCorner {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 99999;
+
+  font-size: 12px;
+  color: #ffd98d;
+
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 217, 141, 0.25);
+  border-radius: 8px;
+
+  padding: 6px 10px;
+
+  font-family: sans-serif;
+  opacity: 0.75;
+
+  backdrop-filter: blur(6px);
+}
+</style>
+
 </head>
 
 <body>
 
-  <div class="container">
+<!-- =========================
+     PNFT CORNER
+========================= -->
+<div id="pnftCorner">
+🧠 PNFT NODE<br>
+Vive / Glyph / V / E
+</div>
 
-    <h1>
-      {°(•.)•.)//<br>
-      [*(˚•.)•.)//<br>
-      {˚(°.•).•)//
-    </h1>
+<div class="wrapper">
 
-    <p>kde signál získává hodnotu</p>
+<div class="topLayout">
 
-    <div class="sig">
-      PNFT • Vivere atque Fru`i¡´T<br><br>
+<!-- LEVÁ STRANA -->
+<div class="hero">
 
-      system: signal layer active<br>
-      node: Brezova / CZ<br>
-      status: online<br><br>
+<div id="sphere">🧠 Bráška Hlava</div>
+<div id="log">Inicializuji systém...</div>
 
-      "kde signál přestává být šumem"
-    </div>
+</div>
 
-  </div>
+<!-- PRAVÁ STRANA -->
+<div class="signalSphere">
+
+<canvas id="globe-canvas"></canvas>
+
+<div class="sphereOverlay">
+
+<div class="sphereName">Signal Sphere</div>
+<div class="sphereState">🟢 Online</div>
+<div class="spherePulse">Synchronizuji...</div>
+
+</div>
+
+<div class="sphereTitle">VAFT Signal Core</div>
+
+<div id="status" class="hud-center">režim: mesh</div>
+
+</div>
+
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard">
+
+<div class="card">
+<h2>VaF`i¡´T Sklad ᕕ(◕‿◕)ᕗ 📦</h2>
+
+<div class="stat"><span>Místní paměť</span><span id="localSize">0 KB</span></div>
+<div class="stat"><span>Vyrovnávací paměť</span><span id="cacheSize">0 položek</span></div>
+<div class="stat"><span>Stav jádra</span><span id="kernelState">Spouštím...</span></div>
+<div class="stat"><span>Registry</span><span id="registryCount">0</span></div>
+<div class="stat"><span>Materiály</span><span id="materialCount">0</span></div>
+
+</div>
+
+<div class="card">
+<h2>🦆 ChybaŽrouT</h2>
+<p>Diagnostika systému VAFT.</p>
+
+<button onclick="prohledatSystem()">
+{宇(°.)°.)// \\[◉_◉]// \\(.°(.°)ア }
+</button>
+
+<pre id="diagnosticOutput">Připraven k hledání.</pre>
+</div>
+
+<div class="card">
+<h2>📜 VaF`i¡´Toviny</h2>
+
+<pre id="systemLog">
+[VAFT]
+Inicializuji...
+Signal Sphere...
+čekám...
+Bráška Hlava...
+online...
+</pre>
+
+</div>
+
+</div>
+
+<!-- VAFT MODULES -->
+<script src="../vaft.loader.js"></script>
+<script src="../vaft.core.js"></script>
+<script src="../vaft.heartbeat.js"></script>
+
+<script>
+const log = document.getElementById("log");
+
+const canvas = document.getElementById("globe-canvas");
+const ctx = canvas.getContext("2d");
+
+const dpr = window.devicePixelRatio || 1;
+
+let width = 0;
+let height = 0;
+
+let viewScale = 1;
+let viewOffsetX = 0;
+let viewOffsetY = 0;
+
+let globalTiltX = -0.7;
+let globalTiltY = 0;
+
+const signalCore = {
+  points: [],
+  rings: 12,
+  segments: 18,
+  baseRadius: 120,
+  coneHeight: 200
+};
+
+function resizeCanvas(){
+  const rect = canvas.getBoundingClientRect();
+
+  width = rect.width;
+  height = rect.height;
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+function generate(){
+  signalCore.points = [];
+
+  for(let i=0;i<=signalCore.rings;i++){
+    const t = i / signalCore.rings;
+    const y = signalCore.coneHeight/2 - t*signalCore.coneHeight;
+    const r = signalCore.baseRadius * (1 - 0.75*t);
+
+    for(let j=0;j<signalCore.segments;j++){
+      const a = (j/signalCore.segments) * Math.PI*2;
+
+      signalCore.points.push({
+        x: Math.cos(a)*r,
+        y,
+        z: Math.sin(a)*r
+      });
+    }
+  }
+}
+
+generate();
+
+function draw(){
+  ctx.clearRect(0,0,width,height);
+
+  ctx.strokeStyle = "rgba(255,217,141,0.3)";
+  ctx.fillStyle = "#ffd98d";
+
+  for(const p of signalCore.points){
+    const sx = width/2 + p.x;
+    const sy = height/2 + p.y;
+
+    ctx.beginPath();
+    ctx.arc(sx,sy,2,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
 
 </body>
 </html>
